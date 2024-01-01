@@ -1,5 +1,42 @@
+
 .center{
     display: flex;
     justify-content: center;
     align-items: center;
 }
+.form-control{
+    height: 60px;
+    border: none;
+    border-bottom: 2px solid;
+    padding: 10px 20px;
+    background-color: transparent;
+   font-size: 18px;
+}
+.btn{
+    height: 50px;
+    font-size: 18px; 
+    border: none;
+    color: rgba(0, 0, 0, 0.444);  
+}
+.btn:hover{
+    color: rgba(0, 0, 0, 0.444);
+    border:transparent;
+    font-size: 20px;
+    background-color: transparent;
+    box-shadow: 2px 3px rgba(160, 48, 128, 0.623),-2px -3px rgba(218, 127, 193, 0.523);
+}
+.flex{
+    background: linear-gradient(300deg,rgba(22, 97, 208, 0.519),rgba(160, 48, 128, 0.623),rgba(218, 127, 193, 0.523));
+}
+.flex-col{
+    border: 2px solid transparent;
+    box-shadow: 0 7px 15px 5px rgba(0, 0, 0, 0.279);
+    
+}
+.head{
+    border-bottom: 2px solid gray;
+    background-color: transparent;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: 800;
+}
+   
