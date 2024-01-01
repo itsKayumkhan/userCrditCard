@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Cards from "react-credit-cards-2";
 import { Link } from "react-router-dom";
-import axios from "axios"
+import axios from "axios";
+import valid from 'card-validator'
 const Home = () => {
   const [state, setState] = useState({
     card: "",
@@ -10,53 +11,80 @@ const Home = () => {
     cvc: "",
     focus: "",
   });
-  const [cards,setCards] = useState({});
+
+  const [cards, setCards] = useState([]);
+  const [cardValidation,setCardValidation] = useState({
+    card: false,
+    name: false,
+    expire: false,
+    cvc: false,
+  })
+
+
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setState((prev) => ({ ...prev, [name]: value }));
-    console.log(state)
+
+    // Apply formatting for credit card input
+    if (name === "card") {
+      const formattedValue = value.replace(/\s/g, "").replace(/(\d{4})/g, "$1 ").trim();
+      setState((prev) => ({ ...prev, [name]: formattedValue }));
+    } else if (name === "expire") {
+      const formattedValue = value.replace(/\D/g, "").replace(/(\d{2})(\d{0,2})/, "$1/$2").trim();
+      setState((prev) => ({ ...prev, [name]: formattedValue }));
+    } else {
+      setState((prev) => ({ ...prev, [name]: value }));
+    }
   };
+
+
+
   const handleInputFocus = (e) => {
     setState((prev) => ({ ...prev, focus: e.target.name }));
   };
 
   const fetchCards = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/card/all');
+      const response = await axios.get("http://localhost:8000/api/v1/card/all");
       setCards(response.data);
     } catch (error) {
-      console.error('Error fetching cards:', error);
+      console.error("Error fetching cards:", error);
     }
   };
 
   const createCard = async (e) => {
-    e.preventDefault()
+ e.preventDefault();
+ 
+
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/card/add', state);
+      const response = await axios.post("http://localhost:8000/api/v1/card/add", state);
       setCards((prevCards) => [...prevCards, response.data]);
       setState({
-        name: '',
-        card: ' ',
-        expire: ' ',
-        cvv: ' ',
+        card: "",
+        name: "",
+        expire: "",
+        cvc: "",
+        focus: "",
       });
     } catch (error) {
-      console.error('Error creating card:', error);
+      console.error("Error creating card:", error);
     }
   };
 
+  console.log(cardValidation)
+
   const deleteCard = async (id) => {
     try {
-      await axios.delete(`/api/cards/${id}`);
-      setCards((prevCards) => prevCards.filter((card) => card._id !== id));
+      await axios.delete(`http://localhost:8000/api/v1/card/${id}`);
+      fetchCards();
     } catch (error) {
-      console.error('Error deleting card:', error);
+      console.error("Error deleting card:", error);
     }
   };
 
   useEffect(() => {
     fetchCards();
-  }, []); 
+  }, [setCards]);
 
   return (
     <div className="w-full h-screen center flex flex-col gap-3 relative">
@@ -75,13 +103,14 @@ const Home = () => {
           <form onSubmit={createCard}>
             <div className="mb-3">
               <input
-                type="number"
+                type="text"
                 name="card"
                 className="form-control"
                 placeholder="Card Number"
                 value={state.card}
                 onChange={handleInputChange}
                 onFocus={handleInputFocus}
+                maxLength="19" // Set maximum length to ensure only 16 digits and spaces
                 required
               />
             </div>
@@ -99,7 +128,7 @@ const Home = () => {
             <div className="row">
               <div className="col-6 mb-3">
                 <input
-                  type="number"
+                  type="text"
                   name="expire"
                   className="form-control"
                   placeholder="Expiry Date"
@@ -107,6 +136,7 @@ const Home = () => {
                   value={state.expire}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}
+                  maxLength="5"
                   required
                 />
               </div>
@@ -115,17 +145,19 @@ const Home = () => {
                   type="number"
                   name="cvc"
                   className="form-control"
-                  placeholder="cvc"
-                  pattern="\d{3,4}"
+                  placeholder="CVC"
                   value={state.cvc}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}
+                  maxLength="4"
                   required
                 />
               </div>
             </div>
             <div className="d-grid">
-              <button type="submit" className="btn btn-dark">Submit</button>
+              <button type="submit" className="btn btn-dark">
+                Submit
+              </button>
             </div>
           </form>
         </div>
@@ -135,25 +167,28 @@ const Home = () => {
           All Cards
         </div>
         <ul>
-         {cards?.length > 0 ?
-         ( cards?.map(card => (
-            <Link to={`/card/${card?._id}`} key={card?._id}>
-            <li className="bg-blue-100 px-3 border-b-2 border-black">
-              <div className="name text-xl my-2">{card?.name}</div>
-              <div className="flex justify-between">
-                <div className="valid text-gray-400">
-                  <span>Valid Date</span>{card?.valid}
+          {cards?.length > 0 ? (
+            cards?.map((card) => (
+              <li className="  border-b-2 border-black relative" key={card?._id}>
+                <Link to={`/card/${card?._id}`}>
+                  <div className="name text-xl my-2 ps-2">{card?.name}</div>
+                </Link>
+                <div className="flex justify-between px-2">
+                  <div className="expire text-white">
+                    <span>Expire Date</span> : {card?.expire}
+                  </div>
                 </div>
-                <div className="expire text-gray-400">
-                  <span>Expire Date</span>{card?.expire}
-                </div>
-              </div>
-            </li>
-          </Link>
-          ))):(
-            <li>there no cards</li>
-          )
-         }
+                <span
+                  className="center z-10 bg-black text-white  w-8 h-8 absolute cursor-pointer hover:bg-red-500 rounded-s-full right-0 top-0"
+                  onClick={() => deleteCard(card?._id)}
+                >
+                  <i className=" fa-solid fa-xmark"></i>
+                </span>
+              </li>
+            ))
+          ) : (
+            <li>There are no cards</li>
+          )}
         </ul>
       </div>
     </div>
@@ -161,111 +196,3 @@ const Home = () => {
 };
 
 export default Home;
-
-{
-  /* <div className="my-1 w-full">
-//         <div className="pb-3 md:pb-0 flex flex-col w-full">
-//           <label htmlFor="name" className="input-label text-base mb-2">
-//             Owner Name
-//           </label>
-//           <div>
-//             <label className="input-field inline-flex items-baseline border-none shadow-md bg-white p-4 w-full">
-//               <div className="flex-1 leading-none">
-//                 <input
-//                   id="handle"
-//                   type="text"
-//                   className="placeholder-blue outline-none w-full p-0  text-dusty-blue-darker"
-//                   name="handle"
-//                   placeholder="Owner Name"
-//                 />
-//               </div> 
-//             </label>
-//           </div>
-//         </div>
-//       </div>
-//       <div className="my-1">
-//         <div className="pb-3 md:pb-0 flex flex-col w-full">
-//           <label
-//             htmlFor="card"
-//             className="input-label text-base mb-2 w-full"
-//           >
-//             Card Number
-//           </label>
-//           <div>
-//             <label className="input-field inline-flex items-baseline border-none shadow-md bg-white p-4 w-full">
-//               <div className="flex-1 leading-none">
-//                 <input
-//                   id="card"
-//                   type="number"
-//                   className="placeholder-blue outline-none w-full p-0  text-dusty-blue-darker"
-//                   name="handle"
-//                   placeholder="XXXX  XXXX  XXXX  XXXX"
-//                 />
-//               </div>
-//             </label>
-//           </div>
-//         </div>
-//       </div>
-//       <div className="flex justify-between w-full">
-//         <div className="my-1 w-1/3">
-//           <div className="pb-3 md:pb-0 flex flex-col">
-//             <label htmlFor="valid" className="input-label text-base mb-2">
-//               Valid Date
-//             </label>
-//             <div>
-//               <label className="input-field inline-flex items-baseline border-none shadow-md bg-white p-4">
-//                 <div className="flex-1 leading-none">
-//                   <input
-//                     id="valid"
-//                     type="number"
-//                     className="placeholder-blue outline-none w-full p-0  text-dusty-blue-darker"
-//                     name="handle"
-//                     placeholder="--/--"
-//                   />
-//                 </div>
-//               </label>
-//             </div>
-//           </div>
-//         </div>
-//         <div className="my-1 w-1/3">
-//           <div className="pb-3 md:pb-0 flex flex-col">
-//             <label htmlFor="expire" className="input-label text-base mb-2">
-//               Expire Date
-//             </label>
-//             <div>
-//               <label className="input-field inline-flex items-baseline border-none shadow-md bg-white p-4">
-//                 <div className="flex-1 leading-none">
-//                   <input
-//                     id="expire"
-//                     type="number"
-//                     className="placeholder-blue outline-none w-full p-0  text-dusty-blue-darker"
-//                     name="handle"
-//                     placeholder="--/--"
-//                   />
-//                 </div>
-//               </label>
-//             </div>
-//           </div>
-//         </div>{" "}
-//         <div className="my-1 w-1/3">
-//           <div className="pb-3 md:pb-0 flex flex-col">
-//             <label htmlFor="cvc" className="input-label text-base mb-2">
-//               CVc
-//             </label>
-//             <div>
-//               <label className="input-field inline-flex items-baseline border-none shadow-md bg-white p-4">
-//                 <div className="flex-1 leading-none">
-//                   <input
-//                     id="cvc"
-//                     type="number"
-//                     className="appearance-none placeholder-blue outline-none w-full p-0  text-dusty-blue-darker"
-//                     name="handle"
-//                     placeholder="***"
-//                   />
-//                 </div>
-//               </label>
-//             </div>
-//           </div>
-//         </div>
-//       </div> */
-}
