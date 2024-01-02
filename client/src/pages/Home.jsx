@@ -162,11 +162,11 @@ const Home = () => {
           </form>
         </div>
       </div>
-      <div className="absolute top-10 right-10 h-[80%] flex flex-col  bg-white w-72 rounded-lg overflow-hidden">
+      <div className="absolute top-10 right-10 h-[80%] flex flex-col  bg-white w-72 rounded-lg ">
         <div className="head bg-blue-400 text-white text-3xl text-center py-3 ">
           All Cards
         </div>
-        <ul>
+        <ul className="scroll">
           {cards?.length > 0 ? (
             cards?.map((card) => (
               <li className="  border-b-2 border-black relative" key={card?._id}>
@@ -179,15 +179,15 @@ const Home = () => {
                   </div>
                 </div>
                 <span
-                  className="center z-10 bg-black text-white  w-8 h-8 absolute cursor-pointer hover:bg-red-500 rounded-s-full right-0 top-0"
+                  className=" mark center z-10  color-white  w-8 h-8 absolute cursor-pointer hover:bg-red-500 rounded-s-full right-0 top-0"
                   onClick={() => deleteCard(card?._id)}
                 >
-                  <i className=" fa-solid fa-xmark"></i>
+                  <i className="fa-solid fa-xmark">*</i>
                 </span>
               </li>
             ))
           ) : (
-            <li>There are no cards</li>
+            <li className="txts">There are no cards</li>
           )}
         </ul>
       </div>
