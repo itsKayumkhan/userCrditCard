@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Cards from "react-credit-cards-2";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import valid from 'card-validator'
+// import valid from 'card-validator'
 const Home = () => {
   const [state, setState] = useState({
     card: "",
